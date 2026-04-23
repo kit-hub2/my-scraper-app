@@ -1,10 +1,15 @@
+import os
 import requests
 from bs4 import BeautifulSoup
-import sqlite3
+import psycopg2
 from urllib.parse import urljoin
-import time # 追加：連続アクセスを避けて待機するためのツール
+import time
+from dotenv import load_dotenv
 
-# --- 1. 巡回するサイトのリスト（ここにどんどん追加できます） ---
+# .envファイルから隠しパスワードを読み込む
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
+
 TARGET_SITES = [
     {
         "name": "福岡市",
@@ -16,13 +21,15 @@ TARGET_SITES = [
     }
 ]
 
-# --- 2. データベースの準備（site_name を追加） ---
-conn = sqlite3.connect('data.db')
+# --- Supabaseに接続 ---
+conn = psycopg2.connect(DATABASE_URL)
 cursor = conn.cursor()
+
+# PostgreSQL用のテーブル作成文（自動連番が SERIAL という名前に変わります）
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS public_offers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        site_name TEXT,
+        id SERIAL PRIMARY KEY,
+        site_name TEXT, 
         title TEXT,
         url TEXT UNIQUE
     )
@@ -35,10 +42,8 @@ headers = {
 
 total_count = 0
 
-# --- 3. リストの順番にサイトを巡回してスクレイピング ---
 for site in TARGET_SITES:
     print(f"▼ 【{site['name']}】のサイトをチェック中...")
-    
     try:
         response = requests.get(site['url'], headers=headers)
         response.encoding = response.apparent_encoding
@@ -53,26 +58,25 @@ for site in TARGET_SITES:
             if not title or not link_url:
                 continue
                 
-            # キーワードで絞り込み
             if "募集" in title or "提案競技" in title or "プロポーザル" in title or "質問と回答" in title:
                 full_url = urljoin(site['url'], link_url)
                 
-                # DBに保存（site_nameも一緒に保存する）
+                # PostgreSQL用のデータ挿入文（? が %s になり、重複無視の文法が変わります）
                 cursor.execute('''
-                    INSERT OR IGNORE INTO public_offers (site_name, title, url)
-                    VALUES (?, ?, ?)
+                    INSERT INTO public_offers (site_name, title, url)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (url) DO NOTHING
                 ''', (site['name'], title, full_url))
                 
+                # INSERTが成功したかチェック
                 if cursor.rowcount > 0:
                     site_count += 1
                     total_count += 1
 
         print(f"  → {site_count} 件の新着情報を保存しました。")
-        
     except Exception as e:
         print(f"  × エラーが発生しました: {e}")
         
-    # 相手のサーバーに負荷をかけないよう、次のサイトに行く前に2秒待つ（マナー）
     time.sleep(2)
 
 conn.commit()
