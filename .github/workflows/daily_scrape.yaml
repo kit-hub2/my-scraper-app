@@ -1,0 +1,29 @@
+name: Daily Scraper
+
+on:
+  schedule:
+    # 6時間ごと（9時、15時、21時、3時）に実行
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # 手動で実行ボタンも出せるようにする設定
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 必要なライブラリをインストール
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary python-dotenv
+
+      - name: スクレイピングを実行
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scraper.py
