@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公募・プロポーザル情報チェッカー</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .search-container {
+      margin-bottom: 20px;
+    }
+
+    #search-box {
+      padding: 10px;
+      width: 100%;
+      max-width: 400px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .offer-card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .offer-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 0 0 10px 0;
+    }
+
+    .offer-link {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    .offer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ▼ 追加：サイト名を表示するバッジのスタイル */
+    .site-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background-color: #333;
+      color: white;
+      font-size: 0.8em;
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+
+    .badge-福岡市 {
+      background-color: #009944;
+    }
+
+    /* 市のイメージカラーにするとおしゃれです */
+    .badge-北九州市 {
+      background-color: #E60012;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>公募・プロポーザル 新着情報</h1>
+
+  <div class="search-container">
+    <input type="text" id="search-box" placeholder="キーワードで絞り込み... (例: 業務委託)">
+  </div>
+
+  <div id="offer-list">
+    <p>データを読み込み中...</p>
+  </div>
+
+  <script>
+    const apiUrl = 'http://127.0.0.1:8000/api/offers';
+    let allOffers = [];
+
+    function renderOffers(offers) {
+      const listContainer = document.getElementById('offer-list');
+      listContainer.innerHTML = '';
+
+      if (offers.length === 0) {
+        listContainer.innerHTML = '<p>該当する情報が見つかりません。</p>';
+        return;
+      }
+
+      offers.forEach(offer => {
+        // ▼ 変更：site_name のバッジを追加
+        const cardHtml = `
+                    <div class="offer-card">
+                        <span class="site-badge badge-${offer.site_name}">${offer.site_name}</span>
+                        <h2 class="offer-title">${offer.title}</h2>
+                        <a href="${offer.url}" target="_blank" class="offer-link">詳細を見る</a>
+                    </div>
+                `;
+        listContainer.insertAdjacentHTML('beforeend', cardHtml);
+      });
+    }
+
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(data => {
+        allOffers = data;
+        renderOffers(allOffers);
+      })
+      .catch(error => console.error('エラー:', error));
+
+    document.getElementById('search-box').addEventListener('input', function (e) {
+      const keyword = e.target.value.toLowerCase();
+      const filteredOffers = allOffers.filter(offer => {
+        // タイトルだけでなく、サイト名（福岡市など）でも検索できるようにしました
+        return offer.title.toLowerCase().includes(keyword) || offer.site_name.includes(keyword);
+      });
+      renderOffers(filteredOffers);
+    });
+  </script>
+</body>
+
+</html>
