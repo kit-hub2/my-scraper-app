@@ -6,6 +6,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>公募・プロポーザル情報チェッカー</title>
   <style>
+    /* ▼ 検索エリアのレイアウト調整 */
+    .search-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    #pref-filter,
+    #search-box {
+      padding: 10px 12px;
+      font-size: 1em;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    #pref-filter {
+      background-color: white;
+      cursor: pointer;
+    }
+
+    #search-box {
+      flex-grow: 1;
+      /* 検索ボックスを横幅いっぱいに広げる */
+    }
+
     /* ▼ 変更：カードのスタイルから、自治体ごとの箱のスタイルへ */
     .municipality-container {
       background: white;
@@ -38,13 +64,16 @@
       overflow-y: auto;
       background-color: #ffffff;
     }
+
     /* ▼ オプション：スクロールバーのデザインを細くスタイリッシュにする（プロの仕上げ） */
     .offer-list::-webkit-scrollbar {
       width: 6px;
     }
+
     .offer-list::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
+
     .offer-list::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 10px;
@@ -76,8 +105,10 @@
     /* ▼ 追加：一覧をグリッドレイアウトにする */
     #offer-list {
       display: grid;
-      gap: 24px; /* 箱と箱の間のすき間 */
-      grid-template-columns: 1fr; /* 基本は1列（スマホなど） */
+      gap: 24px;
+      /* 箱と箱の間のすき間 */
+      grid-template-columns: 1fr;
+      /* 基本は1列（スマホなど） */
     }
 
     /* ▼ 画面幅が768px以上（タブレット等）なら2列にする */
@@ -99,6 +130,7 @@
       color: #64748b;
       margin-bottom: 4px;
     }
+
     .offer-title {
       font-size: 0.9em;
     }
@@ -107,18 +139,23 @@
     .pref-山口県 {
       background-color: #B91C1C;
     }
+
     .pref-福岡県 {
       background-color: #7C3AED;
     }
+
     .pref-佐賀県 {
       background-color: #8B5CF6;
     }
+
     .pref-大分県 {
       background-color: #DDD6FE;
     }
+
     .pref-宮崎県 {
       background-color: #6D28D9;
     }
+
     .pref-default {
       background-color: #64748b;
     }
@@ -130,6 +167,18 @@
   <h1>公募・プロポーザル 新着情報</h1>
 
   <div class="search-container">
+    <select id="pref-filter">
+      <option value="">すべての県</option>
+      <option value="山口県">山口県</option>
+      <option value="福岡県">福岡県</option>
+      <option value="佐賀県">佐賀県</option>
+      <option value="長崎県">長崎県</option>
+      <option value="大分県">大分県</option>
+      <option value="熊本県">熊本県</option>
+      <option value="宮崎県">宮崎県</option>
+      <option value="鹿児島県">鹿児島県</option>
+    </select>
+
     <input type="text" id="search-box" placeholder="キーワードで絞り込み... (例: 業務委託)">
   </div>
 
@@ -146,7 +195,7 @@
       try {
         const response = await fetch(apiUrl);
         allOffers = await response.json(); // データを allOffers に保存
-        
+
         renderOffers(allOffers); // 画面に表示する関数を呼ぶ
 
       } catch (error) {
@@ -221,19 +270,32 @@
       }
     }
 
-    // ▼ 3. 検索ボックスに入力されたときの処理を追加
-    document.getElementById('search-box').addEventListener('input', (event) => {
-      const keyword = event.target.value.toLowerCase(); // 入力された文字を小文字に変換
-      
-      // キーワードで絞り込んだ新しいリストを作る
-      const filteredOffers = allOffers.filter(offer => 
-        offer.title.toLowerCase().includes(keyword) || 
-        offer.site_name.toLowerCase().includes(keyword)
-      );
-      
-      // 絞り込んだリストを使って画面を再描画する
+    // ▼ 変更・追加：検索とドロップダウンを連動させる関数
+    function filterAndRender() {
+      const keyword = document.getElementById('search-box').value.toLowerCase();
+      const selectedPref = document.getElementById('pref-filter').value;
+
+      const filteredOffers = allOffers.filter(offer => {
+        // 1. キーワードが含まれているか（タイトルか自治体名）
+        const matchKeyword = offer.title.toLowerCase().includes(keyword) ||
+          offer.site_name.toLowerCase().includes(keyword);
+
+        // 2. 選択された都道府県と一致するか（"すべての県"なら無条件でOK）
+        const matchPref = (selectedPref === "") || (offer.prefecture === selectedPref);
+
+        // 両方の条件をクリアしたものだけを残す
+        return matchKeyword && matchPref;
+      });
+
+      // 絞り込んだリストで画面を再描画する
       renderOffers(filteredOffers);
-    });
+    }
+
+    // 検索ボックスに文字が入力されたら絞り込みを実行
+    document.getElementById('search-box').addEventListener('input', filterAndRender);
+
+    // ドロップダウンが変更されたら絞り込みを実行
+    document.getElementById('pref-filter').addEventListener('change', filterAndRender);
 
     // 最初にデータを取得する
     fetchOffers();
