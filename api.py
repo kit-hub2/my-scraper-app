@@ -22,7 +22,16 @@ app.add_middleware(
 def get_offers():
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM public_offers ORDER BY id DESC')
+    
+    # ▼ 変更：現在の日付から12日前以降のデータ、または日付不明（1900-01-01）のデータだけを取得する
+    cursor.execute('''
+        SELECT id, prefecture, site_name, title, url, published_date 
+        FROM public_offers 
+        WHERE published_date >= CURRENT_DATE - INTERVAL '12 days' 
+           OR published_date = '1900-01-01'
+        ORDER BY published_date DESC, id DESC
+    ''')
+    
     rows = cursor.fetchall()
     conn.close()
     
@@ -30,13 +39,14 @@ def get_offers():
     for row in rows:
         results.append({
             "id": row[0],
-            "site_name": row[1],
-            "title": row[2],
-            "url": row[3]
+            "prefecture": row[1],
+            "site_name": row[2],
+            "title": row[3],
+            "url": row[4],
+            "published_date": row[5].strftime('%Y-%m-%d') if row[5] else "日付不明"
         })
     return results
 
-# 今回追加した「1つのURLでHTMLも表示する」ための設定
 @app.get("/")
 def read_index():
     return FileResponse('index.html')

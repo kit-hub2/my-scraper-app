@@ -2,8 +2,8 @@ name: Daily Scraper
 
 on:
   schedule:
-    # 6時間ごと（9時、15時、21時、3時）に実行
-    - cron: '0 */6 * * *'
+    # 毎日 UTC 0時, 8時, 16時（日本時間 9時, 17時, 翌1時）に実行する
+    - cron: '0 0,8,16 * * *'
   workflow_dispatch: # 手動で実行ボタンも出せるようにする設定
 
 jobs:

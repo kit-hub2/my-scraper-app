@@ -6,66 +6,121 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>公募・プロポーザル情報チェッカー</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-
-    .search-container {
-      margin-bottom: 20px;
-    }
-
-    #search-box {
-      padding: 10px;
-      width: 100%;
-      max-width: 400px;
-      font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    .offer-card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 5px;
+    /* ▼ 変更：カードのスタイルから、自治体ごとの箱のスタイルへ */
+    .municipality-container {
+      background: white;
+      border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
     }
 
-    .offer-title {
-      font-size: 1.1em;
-      font-weight: bold;
-      margin: 0 0 10px 0;
-    }
-
-    .offer-link {
-      color: #0066cc;
-      text-decoration: none;
-    }
-
-    .offer-link:hover {
-      text-decoration: underline;
-    }
-
-    /* ▼ 追加：サイト名を表示するバッジのスタイル */
-    .site-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      background-color: #333;
+    .municipality-header {
+      padding: 12px 16px;
       color: white;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .offer-count {
+      font-size: 0.85em;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .offer-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      height: 300px;
+      overflow-y: auto;
+      background-color: #ffffff;
+    }
+    /* ▼ オプション：スクロールバーのデザインを細くスタイリッシュにする（プロの仕上げ） */
+    .offer-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .offer-list::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .offer-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .offer-list li {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .offer-list li:last-child {
+      border-bottom: none;
+    }
+
+    .offer-list a {
+      display: block;
+      padding: 12px 16px;
+      color: #334155;
+      text-decoration: none;
+      line-height: 1.4;
+      transition: background-color 0.2s;
+    }
+
+    .offer-list a:hover {
+      background-color: #f8fafc;
+      color: #0284c7;
+      /* ホバー時に少し青くする */
+    }
+
+    /* ▼ 追加：一覧をグリッドレイアウトにする */
+    #offer-list {
+      display: grid;
+      gap: 24px; /* 箱と箱の間のすき間 */
+      grid-template-columns: 1fr; /* 基本は1列（スマホなど） */
+    }
+
+    /* ▼ 画面幅が768px以上（タブレット等）なら2列にする */
+    @media (min-width: 768px) {
+      #offer-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ▼ 画面幅が1024px以上（PC等）なら最大3列にする */
+    @media (min-width: 1024px) {
+      #offer-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .offer-date {
       font-size: 0.8em;
-      border-radius: 3px;
-      margin-bottom: 8px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .offer-title {
+      font-size: 0.9em;
     }
 
-    .badge-福岡市 {
-      background-color: #009944;
+    /* 都道府県ごとのカラー設定 */
+    .pref-山口県 {
+      background-color: #B91C1C;
     }
-
-    /* 市のイメージカラーにするとおしゃれです */
-    .badge-北九州市 {
-      background-color: #E60012;
+    .pref-福岡県 {
+      background-color: #7C3AED;
+    }
+    .pref-佐賀県 {
+      background-color: #8B5CF6;
+    }
+    .pref-大分県 {
+      background-color: #DDD6FE;
+    }
+    .pref-宮崎県 {
+      background-color: #6D28D9;
+    }
+    .pref-default {
+      background-color: #64748b;
     }
   </style>
 </head>
@@ -84,46 +139,104 @@
 
   <script>
     const apiUrl = '/api/offers';
-    let allOffers = [];
+    let allOffers = []; // 取得したすべてのデータを保存しておく変数
 
-    function renderOffers(offers) {
+    // ▼ 1. データを取得する関数（最初だけ実行される）
+    async function fetchOffers() {
+      try {
+        const response = await fetch(apiUrl);
+        allOffers = await response.json(); // データを allOffers に保存
+        
+        renderOffers(allOffers); // 画面に表示する関数を呼ぶ
+
+      } catch (error) {
+        console.error('データの取得に失敗しました:', error);
+        document.getElementById('offer-list').innerHTML = '<p>エラーが発生しました。</p>';
+      }
+    }
+
+    // ▼ 2. データを画面に表示する関数（検索のたびに実行される）
+    function renderOffers(offersToDisplay) {
       const listContainer = document.getElementById('offer-list');
-      listContainer.innerHTML = '';
 
-      if (offers.length === 0) {
-        listContainer.innerHTML = '<p>該当する情報が見つかりません。</p>';
+      if (offersToDisplay.length === 0) {
+        listContainer.innerHTML = '<p>該当する公募情報はありません。</p>';
         return;
       }
 
-      offers.forEach(offer => {
-        // ▼ 変更：site_name のバッジを追加
-        const cardHtml = `
-                    <div class="offer-card">
-                        <span class="site-badge badge-${offer.site_name}">${offer.site_name}</span>
-                        <h2 class="offer-title">${offer.title}</h2>
-                        <a href="${offer.url}" target="_blank" class="offer-link">詳細を見る</a>
-                    </div>
-                `;
-        listContainer.insertAdjacentHTML('beforeend', cardHtml);
+      // データを自治体ごとにグループ分けする
+      const groupedOffers = offersToDisplay.reduce((acc, offer) => {
+        if (!acc[offer.site_name]) {
+          acc[offer.site_name] = { prefecture: offer.prefecture, items: [] };
+        }
+        acc[offer.site_name].items.push(offer);
+        return acc;
+      }, {});
+
+      // 都道府県の表示順を設定する
+      const prefOrder = ['山口県', '福岡県', '佐賀県', '長崎県', '大分県', '熊本県', '宮崎県', '鹿児島県'];
+
+      // 自治体グループを並び替える
+      const sortedGroups = Object.entries(groupedOffers).sort(([siteA, dataA], [siteB, dataB]) => {
+        let rankA = prefOrder.indexOf(dataA.prefecture);
+        let rankB = prefOrder.indexOf(dataB.prefecture);
+
+        if (rankA === -1) rankA = 999;
+        if (rankB === -1) rankB = 999;
+
+        if (rankA !== rankB) {
+          return rankA - rankB;
+        }
+        return siteA.localeCompare(siteB, 'ja');
       });
+
+      // 画面表示を更新する
+      listContainer.innerHTML = '';
+
+      for (const [siteName, data] of sortedGroups) {
+        const prefClass = data.prefecture ? `pref-${data.prefecture}` : 'pref-default';
+
+        const listItemsHtml = data.items.map(item => `
+          <li>
+              <a href="${item.url}" target="_blank">
+                  <div class="offer-date">${item.published_date}</div>
+                  <div class="offer-title">${item.title}</div>
+              </a>
+          </li>
+        `).join('');
+
+        const containerHtml = `
+          <div class="municipality-container">
+              <div class="municipality-header ${prefClass}">
+                  <span>${siteName}</span>
+                  <span class="offer-count">${data.items.length}件</span>
+              </div>
+              <ul class="offer-list">
+                  ${listItemsHtml}
+              </ul>
+          </div>
+        `;
+
+        listContainer.insertAdjacentHTML('beforeend', containerHtml);
+      }
     }
 
-    fetch(apiUrl)
-      .then(response => response.json())
-      .then(data => {
-        allOffers = data;
-        renderOffers(allOffers);
-      })
-      .catch(error => console.error('エラー:', error));
-
-    document.getElementById('search-box').addEventListener('input', function (e) {
-      const keyword = e.target.value.toLowerCase();
-      const filteredOffers = allOffers.filter(offer => {
-        // タイトルだけでなく、サイト名（福岡市など）でも検索できるようにしました
-        return offer.title.toLowerCase().includes(keyword) || offer.site_name.includes(keyword);
-      });
+    // ▼ 3. 検索ボックスに入力されたときの処理を追加
+    document.getElementById('search-box').addEventListener('input', (event) => {
+      const keyword = event.target.value.toLowerCase(); // 入力された文字を小文字に変換
+      
+      // キーワードで絞り込んだ新しいリストを作る
+      const filteredOffers = allOffers.filter(offer => 
+        offer.title.toLowerCase().includes(keyword) || 
+        offer.site_name.toLowerCase().includes(keyword)
+      );
+      
+      // 絞り込んだリストを使って画面を再描画する
       renderOffers(filteredOffers);
     });
+
+    // 最初にデータを取得する
+    fetchOffers();
   </script>
 </body>
 
