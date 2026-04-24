@@ -16,10 +16,15 @@ NG_WORDS = ["入札", "落札"]
 TARGET_SITES = [
     {"prefecture": "山口県", "name": "山口市", "url": "https://www.city.yamaguchi.lg.jp/life/2/18/92/"},
     {"prefecture": "山口県", "name": "下関市", "url": "https://www.city.shimonoseki.lg.jp/site/nyuusatu/list98-509.html"},
+    {"prefecture": "山口県", "name": "山口県観光サイト", "url": "https://yamaguchi-tourism.jp/business/"},
     {"prefecture": "福岡県", "name": "福岡市", "url": "https://www.city.fukuoka.lg.jp/business/keiyaku-kobo/teiankyogi.html"},
     {"prefecture": "福岡県", "name": "北九州市", "url": "https://www.city.kitakyushu.lg.jp/business/menu03_00174.html"},
+    {"prefecture": "福岡県", "name": "久留米観光サイト", "url": "https://welcome-kurume.com/news/"},
+    {"prefecture": "佐賀県", "name": "嬉野市", "url": "https://www.city.ureshino.lg.jp/sangyo/nyusatsu.html"},
     {"prefecture": "佐賀県", "name": "唐津市", "url": "https://www.city.karatsu.lg.jp/life/7/45/221/"},
+    {"prefecture": "大分県", "name": "大分県", "url": "https://www.pref.oita.jp/site/nyusatu-koubo/"},
     {"prefecture": "大分県", "name": "大分市", "url": "https://www.city.oita.oita.jp/shigotosangyo/proposal/proposal/kobogata/"},
+    {"prefecture": "大分県", "name": "大分県観光サイト", "url": "https://www.visit-oita.jp/news/"},
     {"prefecture": "宮崎県", "name": "宮崎県", "url": "https://www.pref.miyazaki.lg.jp/kense/chotatsu/itaku/"},
     {"prefecture": "宮崎県", "name": "宮崎市", "url": "https://www.city.miyazaki.miyazaki.jp/business/bid/information/"}
 ]
