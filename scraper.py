@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-NG_WORDS = ["入札", "落札", "一覧", "人事", "職員募集", "令和6年", "令和7年"]
+NG_WORDS = ["入札", "落札", "一覧", "人事", "職員募集", "質問回答書追加", "令和6年", "令和7年"]
 
 TARGET_SITES = [
     {"prefecture": "山口県", "name": "山口市", "url": "https://www.city.yamaguchi.lg.jp/life/2/18/92/"},
