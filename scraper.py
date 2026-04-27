@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-NG_WORDS = ["入札", "落札", "一覧", "人事", "職員募集" ]
+NG_WORDS = ["入札", "落札", "一覧", "人事", "職員募集", "令和6年", "令和7年"]
 
 TARGET_SITES = [
     {"prefecture": "山口県", "name": "山口市", "url": "https://www.city.yamaguchi.lg.jp/life/2/18/92/"},
@@ -26,6 +26,8 @@ TARGET_SITES = [
     {"prefecture": "福岡県", "name": "みやま市", "url": "https://www.city.miyama.lg.jp/li/kanko/050/040/"},
     {"prefecture": "福岡県", "name": "久留米観光サイト", "url": "https://welcome-kurume.com/news/"},
     {"prefecture": "佐賀県", "name": "唐津市", "url": "https://www.city.karatsu.lg.jp/life/7/45/221/"},
+    {"prefecture": "長崎県", "name": "長崎市", "url": "https://www.city.nagasaki.lg.jp/life/5/38/164/"},
+    {"prefecture": "長崎県", "name": "五島市", "url": "https://www.city.goto.nagasaki.jp/li/050/020/060/"},
     {"prefecture": "大分県", "name": "大分県", "url": "https://www.pref.oita.jp/site/nyusatu-koubo/"},
     {"prefecture": "大分県", "name": "大分市", "url": "https://www.city.oita.oita.jp/shigotosangyo/proposal/proposal/kobogata/"},
     {"prefecture": "大分県", "name": "大分県観光サイト", "url": "https://www.visit-oita.jp/news/"},

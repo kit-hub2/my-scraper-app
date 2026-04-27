@@ -6,44 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>公募・プロポーザル情報チェッカー</title>
   <style>
-    /* ▼ 検索エリアのレイアウト調整 */
-    .search-container {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
+    body {
+      font-family: sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #0f172a;
     }
 
-    #pref-filter,
-    #search-box {
-      padding: 10px 12px;
-      font-size: 1em;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      outline: none;
-    }
-
-    #pref-filter {
-      background-color: white;
-      cursor: pointer;
-    }
-
-    #search-box {
-      flex-grow: 1;
-      /* 検索ボックスを横幅いっぱいに広げる */
-    }
-
-    /* ▼ 検索キーワードのハイライトデザイン */
-    .highlight {
-      background-color: #fef08a;
-      /* 薄い黄色 */
-      color: #b45309;
-      /* 濃いオレンジ色で文字をくっきりさせる */
-      font-weight: bold;
-      padding: 0 2px;
-      border-radius: 2px;
-    }
-
-    /* ▼ 変更：カードのスタイルから、自治体ごとの箱のスタイルへ */
     .municipality-container {
       background: white;
       border-radius: 8px;
@@ -71,65 +44,52 @@
       list-style: none;
       padding: 0;
       margin: 0;
-      height: 300px;
+      max-height: 300px;
       overflow-y: auto;
       background-color: #ffffff;
     }
-
-    /* ▼ オプション：スクロールバーのデザインを細くスタイリッシュにする（プロの仕上げ） */
     .offer-list::-webkit-scrollbar {
       width: 6px;
     }
-
     .offer-list::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
-
     .offer-list::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 10px;
     }
-
     .offer-list li {
       border-bottom: 1px solid #f1f5f9;
     }
-
     .offer-list li:last-child {
       border-bottom: none;
     }
-
     .offer-list a {
       display: block;
       padding: 12px 16px;
       color: #334155;
       text-decoration: none;
       line-height: 1.4;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
     }
-
     .offer-list a:hover {
-      background-color: #f8fafc;
+      background-color: #f0f9ff;
       color: #0284c7;
-      /* ホバー時に少し青くする */
+      border-left: 4px solid #0ea5e9;
+      padding-left: 12px;
     }
 
-    /* ▼ 追加：一覧をグリッドレイアウトにする */
     #offer-list {
       display: grid;
       gap: 24px;
-      /* 箱と箱の間のすき間 */
       grid-template-columns: 1fr;
-      /* 基本は1列（スマホなど） */
+      align-items: start;
     }
-
-    /* ▼ 画面幅が768px以上（タブレット等）なら2列にする */
     @media (min-width: 768px) {
       #offer-list {
         grid-template-columns: repeat(2, 1fr);
       }
     }
-
-    /* ▼ 画面幅が1024px以上（PC等）なら最大3列にする */
     @media (min-width: 1024px) {
       #offer-list {
         grid-template-columns: repeat(3, 1fr);
@@ -141,32 +101,77 @@
       color: #64748b;
       margin-bottom: 4px;
     }
-
     .offer-title {
       font-size: 0.9em;
     }
 
-    /* 都道府県ごとのカラー設定 */
+    .highlight {
+      background-color: #fef08a;
+      color: #b45309;
+      font-weight: bold;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .new-badge {
+      display: inline-block;
+      font-size: 0.7em;
+      color: white;
+      background-color: #ef4444;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    #pref-filter,
+    #search-box {
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+
+    #search-box {
+      flex-grow: 1;
+    }
+
+    /* 都道府県カラー */
     .pref-山口県 {
-      background-color: #B91C1C;
+      background-color: #b91c1c;
     }
-
     .pref-福岡県 {
-      background-color: #7C3AED;
+      background-color: #7c3aed;
     }
-
     .pref-佐賀県 {
-      background-color: #8B5CF6;
+      background-color: #8b5cf6;
     }
-
+    .pref-長崎県 {
+      background-color: #A78BFA;
+    }
     .pref-大分県 {
       background-color: #DDD6FE;
     }
-
     .pref-宮崎県 {
       background-color: #6D28D9;
     }
-
+    .pref-鹿児島県 {
+      background-color: #5B21B6;
+    }
     .pref-default {
       background-color: #64748b;
     }
@@ -183,14 +188,10 @@
       <option value="山口県">山口県</option>
       <option value="福岡県">福岡県</option>
       <option value="佐賀県">佐賀県</option>
-      <option value="長崎県">長崎県</option>
       <option value="大分県">大分県</option>
-      <option value="熊本県">熊本県</option>
       <option value="宮崎県">宮崎県</option>
-      <option value="鹿児島県">鹿児島県</option>
     </select>
-
-    <input type="text" id="search-box" placeholder="キーワードで絞り込み... (例: 業務委託)">
+    <input type="text" id="search-box" placeholder="キーワードで絞り込み...">
   </div>
 
   <div id="offer-list">
@@ -201,23 +202,19 @@
     const apiUrl = '/api/offers';
     let allOffers = [];
 
-    // ▼ 1. データを取得する関数
     async function fetchOffers() {
       try {
         const response = await fetch(apiUrl);
         allOffers = await response.json();
-
-        renderOffers(allOffers, ''); // 最初はキーワードなしで表示
-
+        renderOffers(allOffers, '');
       } catch (error) {
-        console.error('データの取得に失敗しました:', error);
         document.getElementById('offer-list').innerHTML = '<p>エラーが発生しました。</p>';
       }
     }
 
-    // ▼ 2. データを画面に表示する関数（引数に keyword を追加しました）
     function renderOffers(offersToDisplay, keyword) {
       const listContainer = document.getElementById('offer-list');
+      listContainer.innerHTML = '';
 
       if (offersToDisplay.length === 0) {
         listContainer.innerHTML = '<p>該当する公募情報はありません。</p>';
@@ -232,37 +229,32 @@
         return acc;
       }, {});
 
-      const prefOrder = ['山口県', '福岡県', '佐賀県', '長崎県', '大分県', '熊本県', '宮崎県', '鹿児島県'];
-
+      const prefOrder = ['山口県', '福岡県', '佐賀県', '大分県', '宮崎県'];
       const sortedGroups = Object.entries(groupedOffers).sort(([siteA, dataA], [siteB, dataB]) => {
-        let rankA = prefOrder.indexOf(dataA.prefecture);
-        let rankB = prefOrder.indexOf(dataB.prefecture);
-
-        if (rankA === -1) rankA = 999;
-        if (rankB === -1) rankB = 999;
-
-        if (rankA !== rankB) {
-          return rankA - rankB;
-        }
-        return siteA.localeCompare(siteB, 'ja');
+        let rA = prefOrder.indexOf(dataA.prefecture);
+        let rB = prefOrder.indexOf(dataB.prefecture);
+        if (rA === -1) rA = 999; if (rB === -1) rB = 999;
+        return rA !== rB ? rA - rB : siteA.localeCompare(siteB, 'ja');
       });
 
-      listContainer.innerHTML = '';
+      let highlightRegex = keyword ? new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
 
-      // ▼ 追加：キーワードをハイライトする準備（正規表現）
-      let highlightRegex = null;
-      if (keyword) {
-        // ※「(」や「+」などの記号でエラーが起きないようにプロの魔法（エスケープ）をかけています
-        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // 'gi' は「大文字・小文字を区別せず、すべて見つける」という設定です
-        highlightRegex = new RegExp(`(${escapedKeyword})`, 'gi');
-      }
+      // 今日の日付を取得（比較用）
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
       for (const [siteName, data] of sortedGroups) {
         const prefClass = data.prefecture ? `pref-${data.prefecture}` : 'pref-default';
 
         const listItemsHtml = data.items.map(item => {
-          // ▼ 変更：タイトルにキーワードが含まれていれば、ハイライト用のタグで囲む
+          // --- NEWバッジ判定のロジック ---
+          const pubDate = new Date(item.published_date);
+          pubDate.setHours(0, 0, 0, 0);
+          const diffDays = (today - pubDate) / (1000 * 60 * 60 * 24);
+          const isNew = diffDays >= 0 && diffDays <= 2; // 公開から2日間（今日、昨日、一昨日）
+          const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
+          // ----------------------------
+
           let displayTitle = item.title;
           if (highlightRegex) {
             displayTitle = displayTitle.replace(highlightRegex, '<span class="highlight">$1</span>');
@@ -271,7 +263,7 @@
           return `
             <li>
                 <a href="${item.url}" target="_blank">
-                    <div class="offer-date">${item.published_date}</div>
+                    <div class="offer-date">${item.published_date}${newBadgeHtml}</div>
                     <div class="offer-title">${displayTitle}</div>
                 </a>
             </li>
@@ -284,36 +276,25 @@
                   <span>${siteName}</span>
                   <span class="offer-count">${data.items.length}件</span>
               </div>
-              <ul class="offer-list">
-                  ${listItemsHtml}
-              </ul>
+              <ul class="offer-list">${listItemsHtml}</ul>
           </div>
         `;
-
         listContainer.insertAdjacentHTML('beforeend', containerHtml);
       }
     }
 
-    // ▼ 3. 検索とドロップダウンを連動させる関数
     function filterAndRender() {
-      // 検索ボックスの文字を取得し、前後の無駄な空白を消して(trim)、小文字にする
-      const keyword = document.getElementById('search-box').value.trim().toLowerCase();
-      const selectedPref = document.getElementById('pref-filter').value;
-
-      const filteredOffers = allOffers.filter(offer => {
-        const matchKeyword = offer.title.toLowerCase().includes(keyword) ||
-          offer.site_name.toLowerCase().includes(keyword);
-        const matchPref = (selectedPref === "") || (offer.prefecture === selectedPref);
-        return matchKeyword && matchPref;
-      });
-
-      // ▼ 変更：絞り込んだリストと一緒に「どんなキーワードで検索したか」も渡す
-      renderOffers(filteredOffers, keyword);
+      const kw = document.getElementById('search-box').value.trim().toLowerCase();
+      const pf = document.getElementById('pref-filter').value;
+      const filtered = allOffers.filter(o =>
+        (o.title.toLowerCase().includes(kw) || o.site_name.toLowerCase().includes(kw)) &&
+        (pf === "" || o.prefecture === pf)
+      );
+      renderOffers(filtered, kw);
     }
 
     document.getElementById('search-box').addEventListener('input', filterAndRender);
     document.getElementById('pref-filter').addEventListener('change', filterAndRender);
-
     fetchOffers();
   </script>
 </body>
