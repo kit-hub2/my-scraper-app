@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>公募・プロポーザル情報チェッカー</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -12,10 +13,59 @@
       color: #1e293b;
       padding: 20px;
     }
+
     h1 {
       text-align: center;
       color: #0f172a;
     }
+
+    /* ▼ 追加：ログインエリアのスタイル ▼ */
+    #auth-container {
+      text-align: right;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    #auth-container input {
+      padding: 8px;
+      margin-right: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    #auth-container button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+
+    #auth-container button:hover {
+      opacity: 0.8;
+    }
+
+    .btn-signup {
+      background-color: #10b981;
+    }
+
+    /* 緑色 */
+    .btn-login {
+      background-color: #3b82f6;
+    }
+
+    /* 青色 */
+    .btn-logout {
+      background-color: #64748b;
+    }
+
+    /* 灰色 */
+    /* ▲ 追加ここまで ▲ */
 
     .municipality-container {
       background: white;
@@ -48,22 +98,28 @@
       overflow-y: auto;
       background-color: #ffffff;
     }
+
     .offer-list::-webkit-scrollbar {
       width: 6px;
     }
+
     .offer-list::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
+
     .offer-list::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 10px;
     }
+
     .offer-list li {
       border-bottom: 1px solid #f1f5f9;
     }
+
     .offer-list li:last-child {
       border-bottom: none;
     }
+
     .offer-list a {
       display: block;
       padding: 12px 16px;
@@ -72,6 +128,7 @@
       line-height: 1.4;
       transition: all 0.2s;
     }
+
     .offer-list a:hover {
       background-color: #f0f9ff;
       color: #0284c7;
@@ -85,11 +142,13 @@
       grid-template-columns: 1fr;
       align-items: start;
     }
+
     @media (min-width: 768px) {
       #offer-list {
         grid-template-columns: repeat(2, 1fr);
       }
     }
+
     @media (min-width: 1024px) {
       #offer-list {
         grid-template-columns: repeat(3, 1fr);
@@ -101,6 +160,7 @@
       color: #64748b;
       margin-bottom: 4px;
     }
+
     .offer-title {
       font-size: 0.9em;
     }
@@ -154,24 +214,31 @@
     .pref-山口県 {
       background-color: #b91c1c;
     }
+
     .pref-福岡県 {
       background-color: #7c3aed;
     }
+
     .pref-佐賀県 {
       background-color: #8b5cf6;
     }
+
     .pref-長崎県 {
       background-color: #A78BFA;
     }
+
     .pref-大分県 {
       background-color: #DDD6FE;
     }
+
     .pref-宮崎県 {
       background-color: #6D28D9;
     }
+
     .pref-鹿児島県 {
       background-color: #5B21B6;
     }
+
     .pref-default {
       background-color: #64748b;
     }
@@ -180,6 +247,19 @@
 
 <body>
 
+  <div id="auth-container">
+    <div id="login-form">
+      <input type="email" id="email-input" placeholder="メールアドレス">
+      <input type="password" id="password-input" placeholder="パスワード（6文字以上）">
+      <button class="btn-signup" onclick="signUp()">新規登録</button>
+      <button class="btn-login" onclick="signIn()">ログイン</button>
+    </div>
+
+    <div id="user-info" style="display: none;">
+      👤 <span id="user-email-display"></span> さん、こんにちは！
+      <button class="btn-logout" onclick="signOut()" style="margin-left: 15px;">ログアウト</button>
+    </div>
+  </div>
   <h1>公募・プロポーザル 新着情報</h1>
 
   <div class="search-container">
@@ -188,10 +268,15 @@
       <option value="山口県">山口県</option>
       <option value="福岡県">福岡県</option>
       <option value="佐賀県">佐賀県</option>
+      <option value="長崎県">長崎県</option>
       <option value="大分県">大分県</option>
       <option value="宮崎県">宮崎県</option>
     </select>
     <input type="text" id="search-box" placeholder="キーワードで絞り込み...">
+    <label
+      style="display: flex; align-items: center; font-size: 0.85em; cursor: pointer; white-space: nowrap; margin-left: 10px;">
+      <input type="checkbox" id="favorite-filter" style="margin-right: 5px;">お気に入り
+    </label>
   </div>
 
   <div id="offer-list">
@@ -199,6 +284,120 @@
   </div>
 
   <script>
+    // --- Supabaseの初期設定 ---
+    const SUPABASE_URL = 'https://hockibzuobmmopgdufkw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvY2tpYnp1b2JtbW9wZ2R1Zmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MjA0NzEsImV4cCI6MjA5MjQ5NjQ3MX0.LnLo6q1xmufRDQ8wu21gVPssyJ80CA-fSjk9yk4Jgj4';
+
+    // オプションを追加してセッションの保持をより確実にします
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    let currentUser = null;
+    let userFavorites = [];
+
+    // ▼ 追加：ページ読み込み時にセッションを直接確認する関数
+    async function checkSession() {
+      console.log("初期セッションを確認中...");
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        console.error("セッション取得エラー:", error);
+      }
+      if (session) {
+        console.log("保存されたセッションが見つかりました:", session.user.email);
+        updateAuthState(session);
+      } else {
+        console.log("セッションは見つかりませんでした");
+        updateAuthState(null);
+      }
+    }
+
+    // 認証状態の表示を更新する共通関数
+    async function updateAuthState(session) {
+      const loginForm = document.getElementById('login-form');
+      const userInfo = document.getElementById('user-info');
+      const emailDisplay = document.getElementById('user-email-display');
+
+      if (session) {
+        currentUser = session.user;
+        loginForm.style.display = 'none';
+        userInfo.style.display = 'block';
+        emailDisplay.textContent = currentUser.email;
+        await fetchFavorites();
+      } else {
+        currentUser = null;
+        userFavorites = [];
+        loginForm.style.display = 'block';
+        userInfo.style.display = 'none';
+      }
+      filterAndRender();
+    }
+
+    // 認証状態の変化を監視（リロード時以外も対応）
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      console.log("認証状態の変化イベント:", event);
+      updateAuthState(session);
+    });
+
+    // --- 新規登録・ログイン・ログアウト ---
+    async function signUp() {
+      const email = document.getElementById('email-input').value;
+      const password = document.getElementById('password-input').value;
+      if (!email || !password) return alert("入力してください");
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) alert('登録エラー: ' + error.message);
+      else alert('登録成功！');
+    }
+
+    async function signIn() {
+      const email = document.getElementById('email-input').value;
+      const password = document.getElementById('password-input').value;
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) alert('ログイン失敗: ' + error.message);
+    }
+
+    async function signOut() {
+      console.log("ログアウトを試行中...");
+      // 通信が固まるのを防ぐため、まずは画面をリセットする
+      const { error } = await supabaseClient.auth.signOut();
+      currentUser = null;
+      userFavorites = [];
+      window.location.reload();
+    }
+
+    // --- お気に入り機能 ---
+    async function fetchFavorites() {
+      if (!currentUser) return;
+      try {
+        const { data, error } = await supabaseClient.from('user_favorites').select('offer_id');
+        if (!error && data) userFavorites = data.map(fav => fav.offer_id);
+      } catch (e) {
+        console.error("お気に入り取得失敗:", e);
+      }
+    }
+
+    async function toggleFavorite(offerId) {
+      if (!currentUser) return alert("ログインしてください");
+
+      const isFavorited = userFavorites.includes(offerId);
+
+      if (isFavorited) {
+        const { error } = await supabaseClient.from('user_favorites').delete()
+          .eq('user_id', currentUser.id).eq('offer_id', offerId);
+        if (!error) userFavorites = userFavorites.filter(id => id !== offerId);
+      } else {
+        const { error } = await supabaseClient.from('user_favorites')
+          .insert({ user_id: currentUser.id, offer_id: offerId });
+        if (!error) userFavorites.push(offerId);
+      }
+      filterAndRender();
+    }
+
+    // --- 以下、データ取得・表示処理（変更なし） ---
     const apiUrl = '/api/offers';
     let allOffers = [];
 
@@ -208,7 +407,7 @@
         allOffers = await response.json();
         renderOffers(allOffers, '');
       } catch (error) {
-        document.getElementById('offer-list').innerHTML = '<p>エラーが発生しました。</p>';
+        document.getElementById('offer-list').innerHTML = '<p>エラー</p>';
       }
     }
 
@@ -216,86 +415,93 @@
       const listContainer = document.getElementById('offer-list');
       listContainer.innerHTML = '';
 
-      if (offersToDisplay.length === 0) {
-        listContainer.innerHTML = '<p>該当する公募情報はありません。</p>';
-        return;
-      }
-
       const groupedOffers = offersToDisplay.reduce((acc, offer) => {
-        if (!acc[offer.site_name]) {
-          acc[offer.site_name] = { prefecture: offer.prefecture, items: [] };
-        }
+        if (!acc[offer.site_name]) acc[offer.site_name] = { prefecture: offer.prefecture, items: [] };
         acc[offer.site_name].items.push(offer);
         return acc;
       }, {});
 
-      const prefOrder = ['山口県', '福岡県', '佐賀県', '大分県', '宮崎県'];
+      const prefOrder = ['山口県', '福岡県', '佐賀県', '長崎県', '大分県', '宮崎県', '鹿児島県'];
       const sortedGroups = Object.entries(groupedOffers).sort(([siteA, dataA], [siteB, dataB]) => {
         let rA = prefOrder.indexOf(dataA.prefecture);
         let rB = prefOrder.indexOf(dataB.prefecture);
-        if (rA === -1) rA = 999; if (rB === -1) rB = 999;
-        return rA !== rB ? rA - rB : siteA.localeCompare(siteB, 'ja');
+        return (rA !== rB) ? rA - rB : siteA.localeCompare(siteB, 'ja');
       });
 
       let highlightRegex = keyword ? new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
-
-      // 今日の日付を取得（比較用）
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
 
       for (const [siteName, data] of sortedGroups) {
         const prefClass = data.prefecture ? `pref-${data.prefecture}` : 'pref-default';
-
         const listItemsHtml = data.items.map(item => {
-          // --- NEWバッジ判定のロジック ---
           const pubDate = new Date(item.published_date);
           pubDate.setHours(0, 0, 0, 0);
-          const diffDays = (today - pubDate) / (1000 * 60 * 60 * 24);
-          const isNew = diffDays >= 0 && diffDays <= 2; // 公開から2日間（今日、昨日、一昨日）
-          const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
-          // ----------------------------
+          const isNew = (today - pubDate) / (1000 * 60 * 60 * 24) <= 2;
 
           let displayTitle = item.title;
-          if (highlightRegex) {
-            displayTitle = displayTitle.replace(highlightRegex, '<span class="highlight">$1</span>');
-          }
+          if (highlightRegex) displayTitle = displayTitle.replace(highlightRegex, '<span class="highlight">$1</span>');
+
+          const isFavorited = userFavorites.includes(item.id);
+          const starIcon = isFavorited ? '★' : '☆';
+          const starColor = isFavorited ? '#eab308' : '#cbd5e1';
 
           return `
-            <li>
-                <a href="${item.url}" target="_blank">
-                    <div class="offer-date">${item.published_date}${newBadgeHtml}</div>
+            <li style="display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding-left: 10px;">
+                <button onclick="toggleFavorite(${item.id})" 
+                        style="background:none; border:none; cursor:pointer; font-size:1.4em; color:${starColor}; padding:10px 5px;">
+                  ${starIcon}
+                </button>
+                <a href="${item.url}" target="_blank" style="flex-grow: 1; padding: 12px 10px; border-bottom: none;">
+                    <div class="offer-date">${item.published_date}${isNew ? '<span class="new-badge">NEW</span>' : ''}</div>
                     <div class="offer-title">${displayTitle}</div>
                 </a>
             </li>
           `;
         }).join('');
 
-        const containerHtml = `
+        listContainer.insertAdjacentHTML('beforeend', `
           <div class="municipality-container">
-              <div class="municipality-header ${prefClass}">
-                  <span>${siteName}</span>
-                  <span class="offer-count">${data.items.length}件</span>
-              </div>
-              <ul class="offer-list">${listItemsHtml}</ul>
+              <div class="municipality-header ${prefClass}"><span>${siteName}</span><span class="offer-count">${data.items.length}件</span></div>
+              <ul class="offer-list" style="list-style:none; padding:0;">${listItemsHtml}</ul>
           </div>
-        `;
-        listContainer.insertAdjacentHTML('beforeend', containerHtml);
+        `);
       }
     }
 
     function filterAndRender() {
       const kw = document.getElementById('search-box').value.trim().toLowerCase();
       const pf = document.getElementById('pref-filter').value;
-      const filtered = allOffers.filter(o =>
-        (o.title.toLowerCase().includes(kw) || o.site_name.toLowerCase().includes(kw)) &&
-        (pf === "" || o.prefecture === pf)
-      );
+
+      // ▼ 復活：お気に入りフィルターの状態を取得
+      const favCheckbox = document.getElementById('favorite-filter');
+      const onlyFav = favCheckbox ? favCheckbox.checked : false;
+
+      const filtered = allOffers.filter(o => {
+        // 1. キーワード検索
+        const matchKeyword = (o.title.toLowerCase().includes(kw) || o.site_name.toLowerCase().includes(kw));
+        // 2. 都道府県検索
+        const matchPref = (pf === "" || o.prefecture === pf);
+        // 3. お気に入り絞り込み
+        const matchFavorite = !onlyFav || userFavorites.includes(o.id);
+
+        return matchKeyword && matchPref && matchFavorite;
+      });
+
       renderOffers(filtered, kw);
     }
 
     document.getElementById('search-box').addEventListener('input', filterAndRender);
     document.getElementById('pref-filter').addEventListener('change', filterAndRender);
-    fetchOffers();
+
+    // ▼ 復活：チェックボックスがクリックされた時も再描画するように設定
+    const favCheckbox = document.getElementById('favorite-filter');
+    if (favCheckbox) {
+      favCheckbox.addEventListener('change', filterAndRender);
+    }
+
+    // ▼ 起動時の順序を整理
+    checkSession(); // まずログイン状態を確認
+    fetchOffers();  // 同時に案件データを取得
   </script>
 </body>
 
