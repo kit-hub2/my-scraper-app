@@ -242,6 +242,45 @@
     .pref-default {
       background-color: #64748b;
     }
+
+    /* Google検索ボタンエリアのスタイル ▼ */
+    .google-search-container {
+      margin-bottom: 24px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .google-search-title {
+      font-size: 0.9em;
+      color: #475569;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .google-buttons-wrapper {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-google {
+      padding: 6px 16px;
+      font-size: 0.85em;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      background-color: #f8fafc;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-google:hover {
+      background-color: #e2e8f0;
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 
@@ -279,6 +318,11 @@
     </label>
   </div>
 
+  <div class="google-search-container">
+    <div class="google-search-title">🔍 各県の最新情報（過去24時間以内）をGoogleで検索</div>
+    <div id="google-buttons" class="google-buttons-wrapper"></div>
+  </div>
+
   <div id="offer-list">
     <p>データを読み込み中...</p>
   </div>
@@ -300,7 +344,7 @@
     let currentUser = null;
     let userFavorites = [];
 
-    // ▼ 追加：ページ読み込み時にセッションを直接確認する関数
+    // ▼ ページ読み込み時にセッションを直接確認する関数
     async function checkSession() {
       console.log("初期セッションを確認中...");
       const { data: { session }, error } = await supabaseClient.auth.getSession();
@@ -397,7 +441,7 @@
       filterAndRender();
     }
 
-    // --- 以下、データ取得・表示処理（変更なし） ---
+    // --- 以下、データ取得・表示処理 ---
     const apiUrl = '/api/offers';
     let allOffers = [];
 
@@ -447,7 +491,7 @@
 
           return `
             <li style="display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding-left: 10px;">
-                <button onclick="toggleFavorite(${item.id})" 
+                <button onclick="toggleFavorite(${item.id})"
                         style="background:none; border:none; cursor:pointer; font-size:1.4em; color:${starColor}; padding:10px 5px;">
                   ${starIcon}
                 </button>
@@ -472,7 +516,7 @@
       const kw = document.getElementById('search-box').value.trim().toLowerCase();
       const pf = document.getElementById('pref-filter').value;
 
-      // ▼ 復活：お気に入りフィルターの状態を取得
+      // ▼ お気に入りフィルターの状態を取得
       const favCheckbox = document.getElementById('favorite-filter');
       const onlyFav = favCheckbox ? favCheckbox.checked : false;
 
@@ -493,7 +537,7 @@
     document.getElementById('search-box').addEventListener('input', filterAndRender);
     document.getElementById('pref-filter').addEventListener('change', filterAndRender);
 
-    // ▼ 復活：チェックボックスがクリックされた時も再描画するように設定
+    // ▼ チェックボックスがクリックされた時も再描画するように設定
     const favCheckbox = document.getElementById('favorite-filter');
     if (favCheckbox) {
       favCheckbox.addEventListener('change', filterAndRender);
@@ -502,6 +546,31 @@
     // ▼ 起動時の順序を整理
     checkSession(); // まずログイン状態を確認
     fetchOffers();  // 同時に案件データを取得
+
+    // ▼ 追加：Google検索ボタンを自動生成するロジック ▼
+    const searchPrefectures = ['山口県', '福岡県', '佐賀県', '長崎県', '大分県', '宮崎県', '鹿児島県'];
+    const googleButtonsContainer = document.getElementById('google-buttons');
+
+    searchPrefectures.forEach(pref => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-google';
+      btn.textContent = pref;
+
+      btn.onclick = () => {
+        // 1. 検索キーワードを作成： 例「山口県 (公募 OR プロポーザル OR 仕様書)」
+        const query = `${pref} (公募 OR プロポーザル OR 仕様書)`;
+
+        // 2. Google検索のURLを作成
+        // encodeURIComponent は、日本語やスペースをURLで使える文字（%E5%B1%B1...など）に変換します
+        // &tbs=qdr:d を末尾につけることで「24時間以内」の絞り込みを強制します
+        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbs=qdr:d`;
+
+        // 3. 新しいタブで開く
+        window.open(url, '_blank');
+      };
+
+      googleButtonsContainer.appendChild(btn);
+    });
   </script>
 </body>
 

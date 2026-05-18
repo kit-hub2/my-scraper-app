@@ -22,19 +22,19 @@ app.add_middleware(
 def get_offers():
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
-    
+
     # ▼ 変更：現在の日付から12日前以降のデータ、または日付不明（1900-01-01）のデータだけを取得する
     cursor.execute('''
-        SELECT id, prefecture, site_name, title, url, published_date 
-        FROM public_offers 
-        WHERE published_date >= CURRENT_DATE - INTERVAL '12 days' 
-           OR published_date = '1900-01-01'
+        SELECT id, prefecture, site_name, title, url, published_date
+        FROM public_offers
+        WHERE published_date >= CURRENT_DATE - INTERVAL '12 days'
+            OR published_date = '1900-01-01'
         ORDER BY published_date DESC, id DESC
     ''')
-    
+
     rows = cursor.fetchall()
     conn.close()
-    
+
     results = []
     for row in rows:
         results.append({
